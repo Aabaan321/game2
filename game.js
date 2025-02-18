@@ -4,153 +4,253 @@ const powerBar = document.getElementById('power-bar');
 const scoreElement = document.getElementById('score');
 const levelElement = document.getElementById('level');
 const shotsElement = document.getElementById('shots');
-const restartBtn = document.getElementById('restartBtn');
-const muteBtn = document.getElementById('muteBtn');
+const restartButton = document.getElementById('restart');
 
-canvas.width = 1000;
-canvas.height = 600;
+canvas.width = 800;
+canvas.height = 500;
 
-// Create bottle images
-const bottleTypes = {
-    green: createBottleImage('#4CAF50', '#388E3C'),
-    blue: createBottleImage('#2196F3', '#1976D2'),
-    red: createBottleImage('#F44336', '#D32F2F'),
-    gold: createBottleImage('#FFD700', '#FFA000')
-};
-
-function createBottleImage(mainColor, neckColor) {
-    const bottleCanvas = document.createElement('canvas');
-    bottleCanvas.width = 40;
-    bottleCanvas.height = 80;
-    const bCtx = bottleCanvas.getContext('2d');
-
-    // Bottle body
-    bCtx.fillStyle = mainColor;
-    bCtx.beginPath();
-    bCtx.roundRect(5, 20, 30, 55, 5);
-    bCtx.fill();
-
-    // Bottle neck
-    bCtx.fillStyle = neckColor;
-    bCtx.beginPath();
-    bCtx.roundRect(15, 5, 10, 20, 2);
-    bCtx.fill();
-
-    // Shine effect
-    bCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    bCtx.beginPath();
-    bCtx.ellipse(25, 40, 5, 15, 0, 0, Math.PI * 2);
-    bCtx.fill();
-
-    return bottleCanvas;
-}
-
-// Game state
-const gameState = {
+let gameState = {
     score: 0,
     level: 1,
-    shotsLeft: 10,
+    shots: 10,
     power: 0,
-    isPowerCharging: false,
-    isGameOver: false,
-    isMuted: false,
+    isCharging: false,
     bottles: [],
     projectiles: [],
-    particles: [],
-    gravity: 0.5,
-    wind: 0
+    particles: []
 };
 
 class Bottle {
-    constructor(x, y, type) {
+    constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.width = 40;
-        this.height = 80;
-        this.type = type;
-        this.health = type === 'gold' ? 3 : type === 'red' ? 2 : 1;
-        this.rotation = 0;
+        this.width = 30;
+        this.height = 60;
+        this.color = '#3DB34A';
         this.broken = false;
-        this.value = type === 'gold' ? 30 : type === 'red' ? 20 : 10;
-        this.sparkles = [];
-        this.wobble = {
-            angle: 0,
-            speed: 0.02,
-            amplitude: 0.1
-        };
-    }
-
-    update() {
-        this.wobble.angle += this.wobble.speed;
-        this.rotation = Math.sin(this.wobble.angle) * this.wobble.amplitude;
-        
-        // Update sparkles
-        if (Math.random() < 0.1) {
-            this.addSparkle();
-        }
-        
-        this.sparkles = this.sparkles.filter(sparkle => {
-            sparkle.life -= 1;
-            sparkle.y -= 0.5;
-            return sparkle.life > 0;
-        });
     }
 
     draw() {
         if (!this.broken) {
-            ctx.save();
-            ctx.translate(this.x + this.width/2, this.y + this.height/2);
-            ctx.rotate(this.rotation);
+            // Bottle body
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
             
-            // Draw bottle shadow
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.ellipse(2, 5, 20, 10, 0, 0, Math.PI * 2);
-            
-            // Draw bottle
-            ctx.drawImage(bottleTypes[this.type], -this.width/2, -this.height/2);
-            
-            // Draw sparkles
-            this.sparkles.forEach(sparkle => {
-                ctx.fillStyle = `rgba(255, 255, 255, ${sparkle.life/50})`;
-                ctx.beginPath();
-                ctx.arc(sparkle.x - this.width/2, sparkle.y - this.height/2, 
-                       sparkle.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            ctx.restore();
+            // Bottle neck
+            ctx.fillRect(this.x + 10, this.y - 10, 10, 15);
+        }
+    }
+}
+
+class Projectile {
+    constructor(x, y, angle, power) {
+        this.x = x;
+        this.y = y;
+        this.radius = 5;
+        this.angle = angle;
+        this.speed = power * 0.2;
+        this.velocityX = Math.cos(angle) * this.speed;
+        this.velocityY = -Math.sin(angle) * this.speed;
+        this.gravity = 0.4;
+    }
+
+    update() {
+        this.velocityY += this.gravity;
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
+class Particle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = Math.random() * 3;
+        this.velocityX = (Math.random() - 0.5) * 5;
+        this.velocityY = (Math.random() - 0.5) * 5;
+        this.gravity = 0.2;
+        this.life = 1;
+        this.decay = 0.02;
+    }
+
+    update() {
+        this.velocityY += this.gravity;
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+        this.life -= this.decay;
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(61, 179, 74, ${this.life})`;
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
+function initGame() {
+    gameState = {
+        score: 0,
+        level: 1,
+        shots: 10,
+        power: 0,
+        isCharging: false,
+        bottles: [],
+        projectiles: [],
+        particles: []
+    };
+
+    // Create bottles
+    for (let i = 0; i < 5 + gameState.level; i++) {
+        gameState.bottles.push(new Bottle(
+            200 + i * 80,
+            canvas.height - 100 - (i % 2) * 50
+        ));
+    }
+
+    updateHUD();
+}
+
+function updateHUD() {
+    scoreElement.textContent = `Score: ${gameState.score}`;
+    levelElement.textContent = `Level: ${gameState.level}`;
+    shotsElement.textContent = `Shots: ${gameState.shots}`;
+}
+
+function createExplosion(x, y) {
+    for (let i = 0; i < 20; i++) {
+        gameState.particles.push(new Particle(x, y));
+    }
+}
+
+function checkCollision(projectile, bottle) {
+    return projectile.x > bottle.x &&
+           projectile.x < bottle.x + bottle.width &&
+           projectile.y > bottle.y &&
+           projectile.y < bottle.y + bottle.height;
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw aiming line when charging
+    if (gameState.isCharging) {
+        const angle = Math.atan2(canvas.height - mouseY, mouseX - 50);
+        ctx.beginPath();
+        ctx.moveTo(50, canvas.height - 50);
+        ctx.lineTo(50 + Math.cos(angle) * 50, canvas.height - 50 - Math.sin(angle) * 50);
+        ctx.strokeStyle = 'white';
+        ctx.stroke();
+    }
+
+    // Update and draw projectiles
+    gameState.projectiles.forEach((projectile, index) => {
+        projectile.update();
+        projectile.draw();
+
+        // Remove projectiles that are off screen
+        if (projectile.y > canvas.height || 
+            projectile.x < 0 || 
+            projectile.x > canvas.width) {
+            gameState.projectiles.splice(index, 1);
+        }
+
+        // Check collisions with bottles
+        gameState.bottles.forEach(bottle => {
+            if (!bottle.broken && checkCollision(projectile, bottle)) {
+                bottle.broken = true;
+                gameState.score += 10;
+                createExplosion(bottle.x + bottle.width/2, bottle.y + bottle.height/2);
+                gameState.projectiles.splice(index, 1);
+                updateHUD();
+            }
+        });
+    });
+
+    // Draw bottles
+    gameState.bottles.forEach(bottle => bottle.draw());
+
+    // Update and draw particles
+    gameState.particles.forEach((particle, index) => {
+        particle.update();
+        particle.draw();
+        if (particle.life <= 0) {
+            gameState.particles.splice(index, 1);
+        }
+    });
+
+    // Check level completion
+    if (gameState.bottles.every(bottle => bottle.broken)) {
+        gameState.level++;
+        gameState.shots = 10;
+        initGame();
+    }
+
+    // Check game over
+    if (gameState.shots === 0 && gameState.projectiles.length === 0) {
+        const remainingBottles = gameState.bottles.filter(bottle => !bottle.broken).length;
+        if (remainingBottles > 0) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '48px Arial';
+            ctx.fillText('Game Over!', canvas.width/2 - 100, canvas.height/2);
+            return;
         }
     }
 
-    addSparkle() {
-        this.sparkles.push({
-            x: Math.random() * this.width,
-            y: Math.random() * this.height,
-            size: Math.random() * 2 + 1,
-            life: 50
-        });
-    }
+    requestAnimationFrame(gameLoop);
 }
 
-// Rest of the code (Projectile, Particle classes and game logic) remains similar
-// but with enhanced visual effects and improved physics
+let mouseX = 0;
+let mouseY = 0;
 
-// Initialize game
-function initGame() {
-    gameState.bottles = [];
-    const bottleTypes = ['green', 'blue', 'red', 'gold'];
-    
-    for (let i = 0; i < 6 + gameState.level; i++) {
-        const type = bottleTypes[Math.floor(Math.random() * 
-                    (gameState.level > 3 ? 4 : 3))];
-        const x = 200 + i * 100;
-        const y = canvas.height - 150 + (i % 2) * 30;
-        gameState.bottles.push(new Bottle(x, y, type));
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+});
+
+canvas.addEventListener('mousedown', () => {
+    if (gameState.shots > 0) {
+        gameState.isCharging = true;
+        gameState.power = 0;
     }
-}
+});
 
-// Add game loop and event listeners
-// ... (Similar to previous version but with enhanced effects)
+canvas.addEventListener('mouseup', () => {
+    if (gameState.isCharging && gameState.shots > 0) {
+        const angle = Math.atan2(canvas.height - mouseY, mouseX - 50);
+        gameState.projectiles.push(new Projectile(50, canvas.height - 50, angle, gameState.power));
+        gameState.shots--;
+        gameState.isCharging = false;
+        gameState.power = 0;
+        powerBar.style.width = '0%';
+        updateHUD();
+    }
+});
+
+restartButton.addEventListener('click', () => {
+    initGame();
+    gameLoop();
+});
+
+// Power charging animation
+setInterval(() => {
+    if (gameState.isCharging) {
+        gameState.power = Math.min(gameState.power + 2, 100);
+        powerBar.style.width = gameState.power + '%';
+    }
+}, 20);
 
 initGame();
 gameLoop();
