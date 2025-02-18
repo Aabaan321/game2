@@ -1,33 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bottle Shooter Pro</title>
+    <title>Bottle Shooter Game</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="game-wrapper">
-        <div class="game-title">Bottle Shooter Pro</div>
-        <div class="game-container">
-            <div class="hud">
-                <div class="stats-container">
-                    <div id="score">Score: 0</div>
-                    <div id="level">Level: 1</div>
-                    <div id="shots">Shots: 10</div>
-                </div>
-                <div class="power-container">
-                    <div class="power-label">POWER</div>
-                    <div class="power-meter">
-                        <div id="power-bar"></div>
-                    </div>
-                </div>
-            </div>
-            <canvas id="gameCanvas"></canvas>
-            <div class="controls">
-                <button id="restartBtn" class="game-button">New Game</button>
-                <button id="muteBtn" class="game-button">🔊</button>
+    <div class="game-container">
+        <div class="hud">
+            <div id="score">Score: 0</div>
+            <div id="level">Level: 1</div>
+            <div id="shots">Shots: 10</div>
+            <div class="power-bar-container">
+                <div id="power-bar"></div>
             </div>
         </div>
+        <canvas id="gameCanvas"></canvas>
+        <button id="restart">Restart Game</button>
     </div>
     <script src="game.js"></script>
 </body>
