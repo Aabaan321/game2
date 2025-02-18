@@ -1,0 +1,26 @@
+.game-container {
+    text-align: center;
+    margin: 20px;
+}
+
+#gameCanvas {
+    border: 2px solid black;
+    background-color: #87CEEB;
+}
+
+#score, #shots {
+    font-size: 24px;
+    margin: 10px;
+    font-family: Arial, sans-serif;
+}
+
+#restartBtn {
+    padding: 10px 20px;
+    font-size: 18px;
+    margin-top: 10px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
