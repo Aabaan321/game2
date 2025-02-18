@@ -1,15 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bottle Shooting Game</title>
+    <title>Bottle Shooting Challenge</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="game-container">
-        <div id="score">Score: 0</div>
-        <div id="shots">Shots Left: 10</div>
-        <canvas id="gameCanvas"></canvas>
-        <button id="restartBtn" style="display: none;">Restart Game</button>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <div class="hud">
+                <div class="stats">
+                    <div id="score">Score: 0</div>
+                    <div id="level">Level: 1</div>
+                    <div id="shots">Shots: 10</div>
+                </div>
+                <div class="power-meter">
+                    <div id="power-bar"></div>
+                </div>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+            <div class="controls">
+                <button id="restartBtn" class="game-button">Restart Game</button>
+                <button id="muteBtn" class="game-button">🔊</button>
+            </div>
+        </div>
     </div>
     <script src="game.js"></script>
 </body>
